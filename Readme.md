@@ -10,6 +10,11 @@ This readme describes how to install everything required for running the `Solve 
 
 These two packages are developed and maintained by Jeppe Druedahl for the purpose of easy implementaion of efficient (Numba and C/C++) code to solve consumption-savings models. See [consav package](https://github.com/NumEconCopenhagen/ConsumptionSaving) and [EconModel package](https://github.com/NumEconCopenhagen/EconModel) for more information.
 
+# Cloning the code
+1. open Anaconda Prombt
+2. go to the location on your computer where youwant the code to be placed. This can be done by typing `cd /d PATHTOYOURFOLDER` in the prombt.
+3. type `git clone https://github.com/ThomasHJorgensen/ToyModelDivorce.git`. Now the code is dowloaded into your local machine and you can do with it what you want without chaning the files in the GitHub repository.
+
 # Compilation
 The code is implemented in C++. This means that the code should be re-compiled if anything is changed. The `Solve Toy Model.ipynb` notebook does this automatically if requested (`do_compile=True`). To compile the files, Visual Studio 2022 should be installed in the path `C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/`.
 
