@@ -6,7 +6,7 @@ This readme describes how to install everything required for running the `Solve 
 1. Install Python: E.g. the free [Anaconda](https://www.anaconda.com/products/distribution)
 2. Install packages
     1. open Anaconda Prompt (e.g. by searching)
-    2. type `pip install EconModel, consav`
+    2. type `pip install EconModel consav`
 
 These two packages are developed and maintained by Jeppe Druedahl for the purpose of easy implementaion of efficient (Numba and C/C++) code to solve consumption-savings models. See [consav package](https://github.com/NumEconCopenhagen/ConsumptionSaving) and [EconModel package](https://github.com/NumEconCopenhagen/EconModel) for more information.
 
