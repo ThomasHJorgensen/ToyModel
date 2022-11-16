@@ -2,6 +2,8 @@
 
 This readme describes how to install everything required for running the `Solve Toy Model.ipynb` notebook before describing how to execute the code and how the code base is structured.
 
+An online course in Python can be found [here](https://sites.google.com/view/numeconcph-introprog).
+
 # Installation
 1. Install Python: E.g. the free [Anaconda](https://www.anaconda.com/products/distribution)
 2. Install packages
