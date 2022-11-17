@@ -64,7 +64,7 @@ class HouseholdModelClass(EconModelClass):
         par.max_time = 1.0
         
         # wealth
-        par.num_A = 50
+        par.num_A = 30
         par.max_A = 15.0
 
         # human capital

@@ -16,33 +16,20 @@ namespace single {
         return tools::interp_2d(par->grid_pre_hours,par->grid_pre_Ctot,par->num_pre_h,par->num_pre_C,&pre[idx],hours,Ctot);
         
     }
-
     typedef struct {
-        double resources;
-        double hours;
-        double leisure;
-
-        double* V_next;
-        double A;
-        double K;
+        
+        double Ctot;
         double H;
         int iH;
         int gender;
         sol_struct *sol;
         par_struct *par;
 
-        double* cons;
-        double* market;
-        double cons_init;
-        double market_init;
+    } solver_single_last_struct;
 
-        double Ctot;
-
-    } solver_struct;
-    
     double objfunc_single_last(unsigned n, const double *x, double *grad, void *solver_data_in){
         // unpack
-        solver_struct *solver_data = (solver_struct *) solver_data_in;
+        solver_single_last_struct *solver_data = (solver_single_last_struct *) solver_data_in;
 
         double hours = x[0];
 
@@ -94,9 +81,24 @@ namespace single {
         return Util + par->beta*V_next_interp;
     }
 
+    typedef struct {
+        double* V_next;
+        double resources;
+        double hours;
+        double leisure;
+        double A;
+        double K;
+        double H;
+        int iH;
+        int gender;
+        sol_struct *sol;
+        par_struct *par;
+
+    } solver_Ctot_struct;
+
     double objfunc_Ctot(unsigned n, const double *x, double *grad, void *solver_data_in){
         // unpack
-        solver_struct *solver_data = (solver_struct *) solver_data_in;
+        solver_Ctot_struct *solver_data = (solver_Ctot_struct *) solver_data_in;
 
         double Ctot = x[0];
 
@@ -118,24 +120,34 @@ namespace single {
 
     }
     
-    // double solve_Ctot(double* cons, double* market,double leisure,double hours,double A,double K,double H,int iH,int gender,double* V_next,sol_struct *sol,par_struct *par, double cons_init, double market_init , solver_struct * solver_data){
-    double solve_Ctot(solver_struct * solver_data){
+    double solve_Ctot(double* cons, double* market,double leisure,double hours,double A,double K,double H,int iH,int gender,double* V_next,sol_struct *sol,par_struct *par, double cons_init, double market_init){
         
-        // Add resources available for consumption to solver data
-        double labor = utils::labor_implied(solver_data->leisure,solver_data->hours,solver_data->par);
-        double income = labor*utils::wage_func(solver_data->K,solver_data->par);
-        double resources = solver_data->A + income;
-
-        solver_data->resources = resources;
+        // resources available for consumption
+        double labor = utils::labor_implied(leisure,hours,par);
+        double income = labor*utils::wage_func(K,par);
+        double resources = A + income;
         
         // setup numerical solver
-        const int dim = 1;
-        double lb[dim],ub[dim],x[dim];
+        solver_Ctot_struct* solver_data = new solver_Ctot_struct;
+                
+        int dim = 1;
+        double lb[1],ub[1],x[1];
         
         auto opt = nlopt_create(NLOPT_LN_BOBYQA, dim); // NLOPT_LN_BOBYQA NLOPT_LD_MMA NLOPT_LD_LBFGS NLOPT_GN_ORIG_DIRECT
         nlopt_set_ftol_abs(opt,1.e-10);
         double minf=0.0;
 
+        solver_data->V_next = V_next;
+        solver_data->resources = resources;
+        solver_data->hours = hours;
+        solver_data->leisure = leisure;
+        solver_data->A = A;
+        solver_data->K = K;
+        solver_data->H = H;
+        solver_data->iH = iH;
+        solver_data->gender = gender;
+        solver_data->sol = sol;
+        solver_data->par = par;
         nlopt_set_min_objective(opt, objfunc_Ctot, solver_data);
             
         // bounds on share of total spending on consumption
@@ -145,7 +157,7 @@ namespace single {
         nlopt_set_upper_bounds(opt, ub);
 
         // optimize
-        double init = solver_data->cons_init + solver_data->market_init;
+        double init = cons_init + market_init;
         if (init>ub[0]){
             init = 0.5*ub[0];
         } else if(init<lb[0]){
@@ -156,36 +168,64 @@ namespace single {
         nlopt_optimize(opt, x, &minf);
         nlopt_destroy(opt);
 
-        // store results in solver data
+        // store results
         double Ctot = x[0];
-        solver_data->cons[0] = cons_from_Ctot(Ctot,solver_data->hours,solver_data->iH,solver_data->gender,solver_data->sol,solver_data->par);
-        solver_data->market[0] = Ctot - solver_data->cons[0];
+        cons[0] = cons_from_Ctot(Ctot,hours,iH,gender,sol,par);
+        market[0] = Ctot - cons[0];
 
         return minf;
         
     }
 
     // solve the entire period problem. Optimize wrt. labor market work and home production.
+    typedef struct {
+        double* V_next;
+        double A;
+        double K;
+        double H;
+        int iH;
+        int gender;
+        sol_struct *sol;
+        par_struct *par;
+
+        double* cons;
+        double* market;
+        double cons_init;
+        double market_init;
+
+    } solver_struct;
     double objfunc_single(unsigned n, const double *x, double *grad, void *solver_data_in){
         // unpack
+        solver_struct *solver_data = (solver_struct *) solver_data_in;
+
         double leisure = x[0];
         double hours = x[1];
 
-        // add info to solver data
-        solver_struct *solver_data = (solver_struct *) solver_data_in;
-        solver_data->hours = hours; 
-        solver_data->leisure = leisure; 
+        double* V_next = solver_data->V_next;
+        
+        double A = solver_data->A;
+        double K = solver_data->K;
+        double H = solver_data->H;
+        int iH = solver_data->iH;
+        int gender = solver_data->gender;
+        sol_struct* sol = solver_data->sol;
+        par_struct* par = solver_data->par;
+
+        double* cons = solver_data->cons;
+        double* market = solver_data->market;
+        double cons_init = solver_data->cons_init;
+        double market_init = solver_data->market_init;
 
         // Time-constraint enforced through penalty. This makes the constraint behave better.
         double penalty = 0.0;
-        double labor = solver_data->par->max_time - leisure - hours;
+        double labor = par->max_time - leisure - hours;
         if (labor<0.0){
             penalty = -labor * 10000.0;
         }
 
         // printf("leisure:%2.2f, hours:%2.2f -> obj:%2.3f\n",leisure,hours,solve_Ctot(cons,market,leisure,hours,A,K,H,iH,gender,V_next,sol,par, cons_init,market_init));
 
-        return penalty + solve_Ctot(solver_data);
+        return penalty + solve_Ctot(cons,market,leisure,hours,A,K,H,iH,gender,V_next,sol,par, cons_init,market_init);
 
     }
 
@@ -201,17 +241,18 @@ namespace single {
     }
 
     double solve_period_single(double* cons, double* market,double* leisure,double* hours,double A,double K,double H,int iH,int gender,double* V_next,sol_struct *sol,par_struct *par, double cons_init,double market_init,double leisure_init,double hours_init){
+        // setup numerical solver
+        solver_struct* solver_data = new solver_struct;
+                
+        int dim = 2;
+        double lb[2],ub[2],x[2];
         
-        // setup numerical solver        
-        const int dim = 2;
-        double lb[dim],ub[dim],x[dim];
-        
+        // auto opt = nlopt_create(NLOPT_LD_MMA, dim);
         auto opt = nlopt_create(NLOPT_LN_COBYLA, dim); // with constraint this works well. but slow.
         // auto opt = nlopt_create(NLOPT_LN_BOBYQA, dim); // NLOPT_LN_BOBYQA NLOPT_LD_MMA NLOPT_LD_LBFGS NLOPT_GN_ORIG_DIRECT
         nlopt_set_ftol_abs(opt,1.e-8);
         double minf=0.0;
 
-        solver_struct* solver_data = new solver_struct;
         solver_data->V_next = V_next;
         solver_data->A = A;
         solver_data->K = K;
@@ -226,6 +267,7 @@ namespace single {
         solver_data->cons_init = cons_init;
         solver_data->market_init = market_init;
         
+
         nlopt_set_min_objective(opt, objfunc_single, solver_data);
             
         // bounds on hours worked and home production
@@ -260,13 +302,12 @@ namespace single {
             {
 
                 // 1. allocate objects for solver
-                solver_struct* solver_data = new solver_struct;
+                solver_single_last_struct* solver_data = new solver_single_last_struct;
                 
-                const int dim = 1;
-                double lb[dim],ub[dim],x[dim];
+                int dim = 1;
+                double lb[1],ub[1],x[1];
                 
                 auto opt = nlopt_create(NLOPT_LN_BOBYQA, dim); //NLOPT_LN_BOBYQA NLOPT_LD_MMA NLOPT_LD_LBFGS NLOPT_GN_ORIG_DIRECT
-                nlopt_set_ftol_abs(opt,1.e-8);
                 double minf=0.0;
 
                 // 2. loop over states
