@@ -34,3 +34,6 @@ The main Python code is contained in **ToyModel.py** which calls C++ code.
 **Python:** In Python the model instance (object) is initiated, memory is allocated and parameters and grids are set. Building on the `EconModel`, Python also handles all convertions to C++ that we will utilize below. This means that all parameters and grids should be set in `ToyModel.py`. The main C++ file that Python should know about is set in `cpp_filename = 'cppfuncs/solve.cpp'`.
 
 **C++:** All the code solving and simulating the model is implemented in C++ for speed. The `.cpp` files are all stored in the `cppfuncs` folder, which the `EconModel` class assumes. All functions that should be callable from Python must have the `EXPORT` decorator in front of the function definition. All functions will then be callable from Python using `model.cpp.functionname`. See e.g. the function `solve` in `ToyModel.py`. In this example, calling `model.solve()` will automatically call the C++ implementaion. See also [EconModelNotebooks](https://github.com/NumEconCopenhagen/EconModelNotebooks) for illustrations of the link to C++.
+
+# Editor
+I use the free Visual Studio Code by Microsoft. You can dowload it [here](https://code.visualstudio.com/). This editor also allows you to use version control via Git and/or GitHub.
