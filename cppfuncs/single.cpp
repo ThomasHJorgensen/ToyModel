@@ -118,7 +118,6 @@ namespace single {
 
     }
     
-    // double solve_Ctot(double* cons, double* market,double leisure,double hours,double A,double K,double H,int iH,int gender,double* V_next,sol_struct *sol,par_struct *par, double cons_init, double market_init , solver_struct * solver_data){
     double solve_Ctot(solver_struct * solver_data){
         
         // Add resources available for consumption to solver data
@@ -329,7 +328,6 @@ namespace single {
                             }
 
 
-
                             // MEN
                             // settings
                             solver_data->Ctot = Am;
@@ -393,9 +391,6 @@ namespace single {
                     for (int iK=0; iK<par->num_K;iK++){
                         for (int iA=0; iA<par->num_A;iA++){
                             
-                            // TEMP
-                            // if (iH==5 & iK==5 & iA==5) {
-                            
                             int idx = index::index4(t,iH,iK,iA,par->T,par->num_H,par->num_K,par->num_A);
                             int idx_next = index::index4(t+1,0,0,0,par->T,par->num_H,par->num_K,par->num_A);
                             int idx_last = index::index4(t,iH,iK,iA-1,par->T,par->num_H,par->num_K,par->num_A);
@@ -421,8 +416,7 @@ namespace single {
                                 hours_init = sol->h_w_single[idx_last];
                             }
                             
-                            printf("iH:%d,iK:%d,iA:%d,Ctot_init:%2.3f\n",iH,iK,iA, cons_init + market_init);
-
+                            // printf("iH:%d,iK:%d,iA:%d,Ctot_init:%2.3f\n",iH,iK,iA, cons_init + market_init);
 
                             // solve model for women
                             double* cons = &sol->c_w_single[idx];
@@ -455,8 +449,6 @@ namespace single {
                                                         cons_init, market_init, leisure_init, hours_init  );
                             
                             sol->V_m_single[idx] = -obj;
-
-                            // } // TEMP
 
                         }
                     }
