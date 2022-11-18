@@ -77,7 +77,7 @@ namespace single {
         double Util = utils::util(cons,leisure,home_prod,gender,par);
 
         // continuation value
-        double A_next = par->R*(resources - Ctot);
+        double A_next = resources - Ctot;
         double K_next = utils::trans_K(K,labor,par);
         double H_next = utils::trans_H(H,hours,par);
 
@@ -123,7 +123,7 @@ namespace single {
         // Add resources available for consumption to solver data
         double labor = utils::labor_implied(solver_data->leisure,solver_data->hours,solver_data->par);
         double income = labor*utils::wage_func(solver_data->K,solver_data->par);
-        double resources = solver_data->A + income;
+        double resources = solver_data->par->R*solver_data->A + income;
 
         solver_data->resources = resources;
         
@@ -285,7 +285,7 @@ namespace single {
                             // solve for women and men
                             // WOMEN
                             // settings
-                            solver_data->Ctot = Aw;
+                            solver_data->Ctot = par->R*Aw;
                             solver_data->H = Hw;
                             solver_data->iH = iH;
                             solver_data->gender = woman;
@@ -330,7 +330,7 @@ namespace single {
 
                             // MEN
                             // settings
-                            solver_data->Ctot = Am;
+                            solver_data->Ctot = par->R*Am;
                             solver_data->H = Hm;
                             solver_data->iH = iH;
                             solver_data->gender = man;
