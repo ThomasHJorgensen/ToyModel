@@ -131,22 +131,20 @@ class HouseholdModelClass(EconModelClass):
                             
 
         # couples
-        # shape_couple = (par.T,par.num_power,par.num_love,par.num_A)
-        # sol.Vw_couple = np.nan + np.ones(shape_couple)
-        # sol.Vm_couple = np.nan + np.ones(shape_couple)
+        shape_couple = (par.T,par.num_power,par.num_love,par.num_H,par.num_H,par.num_K,par.num_K,par.num_A)
+        sol.Vw_remain = np.nan + np.ones(shape_couple)
+        sol.Vm_remain = np.nan + np.ones(shape_couple)
         
-        # sol.Cw_priv_couple = np.nan + np.ones(shape_couple)
-        # sol.Cm_priv_couple = np.nan + np.ones(shape_couple)
-        # sol.C_pub_couple = np.nan + np.ones(shape_couple)
-        # sol.C_tot_couple = np.nan + np.ones(shape_couple)
+        sol.cons_w_remain = np.nan + np.ones(shape_couple)
+        sol.cons_m_remain = np.nan + np.ones(shape_couple)
+        sol.market_remain = np.nan + np.ones(shape_couple)
 
-        # sol.Vw_remain_couple = np.nan + np.ones(shape_couple)
-        # sol.Vm_remain_couple = np.nan + np.ones(shape_couple)
-        
-        # sol.Cw_priv_remain_couple = np.nan + np.ones(shape_couple)
-        # sol.Cm_priv_remain_couple = np.nan + np.ones(shape_couple)
-        # sol.C_pub_remain_couple = np.nan + np.ones(shape_couple)
-        # sol.C_tot_remain_couple = np.nan + np.ones(shape_couple)
+        sol.leisure_w_remain = np.nan + np.ones(shape_couple)
+        sol.leisure_m_remain = np.nan + np.ones(shape_couple)
+        sol.hours_w_remain = np.nan + np.ones(shape_couple)
+        sol.hours_m_remain = np.nan + np.ones(shape_couple)
+        sol.labor_w_remain = np.nan + np.ones(shape_couple)
+        sol.labor_m_remain = np.nan + np.ones(shape_couple)
 
         # sol.power_idx = np.zeros(shape_couple,dtype=np.int_)
         # sol.power = np.zeros(shape_couple)

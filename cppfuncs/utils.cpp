@@ -27,6 +27,19 @@ namespace utils {
         return par->home_load_1 + par->home_load_2*H;
 
     }
+    double time_input(double hours_w, double hours_m, double Hw, double Hm,par_struct *par){
+        double input_w = 0.0;
+        if(hours_w>0.0) {
+            input_w = home_prod_load(Hw,woman,par)*pow(hours_w,par->home_power_2);
+        }
+        double input_m = 0.0;
+        if(hours_m>0.0) {
+            input_m = home_prod_load(Hm,man,par)*pow(hours_m,par->home_power_2);
+        }
+
+        double Qtot = input_w + input_m;
+        return Qtot;
+    }
     double home_prod_Qtot(double Qtot,double market, par_struct *par){
         
         double input_time = pow(Qtot , par->home_power_1/par->home_power_2);
@@ -39,16 +52,7 @@ namespace utils {
 
     double home_prod(double hours_w, double hours_m, double Hw, double Hm,double market, par_struct *par){
         
-        double input_w = 0.0;
-        if(hours_w>0.0) {
-            input_w = home_prod_load(Hw,woman,par)*pow(hours_w,par->home_power_2);
-        }
-        double input_m = 0.0;
-        if(hours_m>0.0) {
-            input_m = home_prod_load(Hm,man,par)*pow(hours_m,par->home_power_2);
-        }
-
-        double Qtot = input_w + input_m;
+        double Qtot = time_input(hours_w,hours_m,Hw,Hm,par);
         return home_prod_Qtot(Qtot,market,par);
 
     }
