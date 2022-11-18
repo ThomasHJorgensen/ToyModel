@@ -304,7 +304,7 @@ namespace single {
                             if (iA==0){
                                 x[0] = ub[0]/1.1;
                             }
-                            
+                            d
                             nlopt_optimize(opt, x, &minf);
 
                             // store results
