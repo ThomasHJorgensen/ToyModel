@@ -27,6 +27,16 @@ namespace utils {
         return par->home_load_1 + par->home_load_2*H;
 
     }
+    double home_prod_Qtot(double Qtot,double market, par_struct *par){
+        
+        double input_time = pow(Qtot , par->home_power_1/par->home_power_2);
+        double input_market = pow(market,par->home_power_1);
+
+        double Q = pow(input_time + input_market , 1.0/par->home_power_1);
+        
+        return Q;
+    }
+
     double home_prod(double hours_w, double hours_m, double Hw, double Hm,double market, par_struct *par){
         
         double input_w = 0.0;
@@ -37,12 +47,10 @@ namespace utils {
         if(hours_m>0.0) {
             input_m = home_prod_load(Hm,man,par)*pow(hours_m,par->home_power_2);
         }
-        double input_time = pow(input_w + input_m , par->home_power_1/par->home_power_2);
-        double input_market = pow(market,par->home_power_1);
 
-        double Q = pow(input_time + input_market , 1.0/par->home_power_1);
-        
-        return Q;
+        double Qtot = input_w + input_m;
+        return home_prod_Qtot(Qtot,market,par);
+
     }
 
     double home_prod_single(double hours, double market, double H, int gender, par_struct* par){
@@ -66,13 +74,13 @@ namespace utils {
         return pow(cons,curv) * curv_inv + pow(leisure,curv) * curv_inv + pow(home_prod,curv) * curv_inv;
     }
 
-    // double util_couple(double Cw_priv, double Cm_priv, double C_pub,int iP, int iL,par_struct* par){
-    //     double love = par->grid_love[iL];
-    //     double power = par->grid_power[iP];
+    double util_couple(double cons_w, double cons_m, double home_prod,double leisure_w, double leisure_m, int iP,int iL,par_struct* par){
+        double power = par->grid_power[iP];
+        double love = par->grid_love[iP];
 
-    //     double Uw = util(Cw_priv,C_pub,woman,par,love);
-    //     double Um = util(Cm_priv,C_pub,man,par,love);
+        double Uw = util(cons_w,leisure_w,home_prod,woman,par);
+        double Um = util(cons_m,leisure_m,home_prod,man,par);
 
-    //     return power*Uw + (1.0-power)*Um;
-    // }
+        return power*Uw + (1.0-power)*Um + love;
+    }
 }

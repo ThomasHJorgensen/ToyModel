@@ -14,6 +14,9 @@ typedef struct sol_struct
  double* pre_market_w_single;
  double* pre_cons_m_single;
  double* pre_market_m_single;
+ double* pre_cons_w;
+ double* pre_cons_m;
+ double* pre_market;
 } sol_struct;
 
 double* get_double_p_sol_struct(sol_struct* x, char* name){
@@ -32,6 +35,9 @@ double* get_double_p_sol_struct(sol_struct* x, char* name){
  else if( strcmp(name,"pre_market_w_single") == 0 ){ return x->pre_market_w_single; }
  else if( strcmp(name,"pre_cons_m_single") == 0 ){ return x->pre_cons_m_single; }
  else if( strcmp(name,"pre_market_m_single") == 0 ){ return x->pre_market_m_single; }
+ else if( strcmp(name,"pre_cons_w") == 0 ){ return x->pre_cons_w; }
+ else if( strcmp(name,"pre_cons_m") == 0 ){ return x->pre_cons_m; }
+ else if( strcmp(name,"pre_market") == 0 ){ return x->pre_market; }
  else {return NULL;}
 
 }

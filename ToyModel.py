@@ -96,7 +96,9 @@ class HouseholdModelClass(EconModelClass):
         # pre-computation
         par.num_pre_h = 50
         par.num_pre_C = 100
-        
+        par.num_pre_Q = 50
+        par.max_pre_Q = 10.0
+
     def allocate(self):
         par = self.par
         sol = self.sol
@@ -149,6 +151,12 @@ class HouseholdModelClass(EconModelClass):
         # sol.power_idx = np.zeros(shape_couple,dtype=np.int_)
         # sol.power = np.zeros(shape_couple)
 
+        # pre-computation
+        shape_pre_couple = (par.num_power,par.num_pre_Q,par.num_pre_C)
+        sol.pre_cons_w = np.nan + np.ones(shape_pre_couple)
+        sol.pre_cons_m = np.nan + np.ones(shape_pre_couple)
+        sol.pre_market = np.nan + np.ones(shape_pre_couple)
+
         
     def setup_grids(self):
         par = self.par
@@ -190,6 +198,7 @@ class HouseholdModelClass(EconModelClass):
         # pre-computation
         par.grid_pre_Ctot = np.linspace(par.grid_A[0],par.grid_A[-1],par.num_pre_C)
         par.grid_pre_hours = np.linspace(0.0001,par.max_time,par.num_pre_h)
+        par.grid_pre_Qtot = np.linspace(1.0e-8,par.max_pre_Q,par.num_pre_Q)
 
     def solve(self):
         sol = self.sol

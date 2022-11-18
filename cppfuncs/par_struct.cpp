@@ -34,6 +34,8 @@ typedef struct par_struct
  int threads;
  int num_pre_h;
  int num_pre_C;
+ int num_pre_Q;
+ double max_pre_Q;
  double* grid_A;
  double* grid_Aw;
  double* grid_Am;
@@ -47,6 +49,7 @@ typedef struct par_struct
  double* grid_weight_love;
  double* grid_pre_Ctot;
  double* grid_pre_hours;
+ double* grid_pre_Qtot;
 } par_struct;
 
 double get_double_par_struct(par_struct* x, char* name){
@@ -72,6 +75,7 @@ double get_double_par_struct(par_struct* x, char* name){
  else if( strcmp(name,"max_H") == 0 ){ return x->max_H; }
  else if( strcmp(name,"max_love") == 0 ){ return x->max_love; }
  else if( strcmp(name,"sigma_love") == 0 ){ return x->sigma_love; }
+ else if( strcmp(name,"max_pre_Q") == 0 ){ return x->max_pre_Q; }
  else {return NAN;}
 
 }
@@ -92,6 +96,7 @@ int get_int_par_struct(par_struct* x, char* name){
  else if( strcmp(name,"threads") == 0 ){ return x->threads; }
  else if( strcmp(name,"num_pre_h") == 0 ){ return x->num_pre_h; }
  else if( strcmp(name,"num_pre_C") == 0 ){ return x->num_pre_C; }
+ else if( strcmp(name,"num_pre_Q") == 0 ){ return x->num_pre_Q; }
  else {return -9999;}
 
 }
@@ -112,6 +117,7 @@ double* get_double_p_par_struct(par_struct* x, char* name){
  else if( strcmp(name,"grid_weight_love") == 0 ){ return x->grid_weight_love; }
  else if( strcmp(name,"grid_pre_Ctot") == 0 ){ return x->grid_pre_Ctot; }
  else if( strcmp(name,"grid_pre_hours") == 0 ){ return x->grid_pre_hours; }
+ else if( strcmp(name,"grid_pre_Qtot") == 0 ){ return x->grid_pre_Qtot; }
  else {return NULL;}
 
 }

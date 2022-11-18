@@ -98,6 +98,101 @@ void precompute_single(sol_struct* sol, par_struct* par){
         }
     }
 }
+// Pre-compute: COUPLES
+typedef struct {
+        
+    double C_tot;
+    double Q_tot;
+    int iP;
+    par_struct *par;
+
+} solver_pre_struct;
+
+double objfunc_pre(unsigned n, const double *x, double *grad, void *solver_data_in){
+    // fixed states/choices that does not matter here
+    int iL = 0;
+    double leisure_w = 1.0;
+    double leisure_m = 1.0;
+
+    // unpack
+    solver_pre_struct *solver_data = (solver_pre_struct *) solver_data_in;
+    
+    double share_cons_w = x[0];
+    double share_cons_m = x[1];
+    double C_tot = solver_data->C_tot;
+    double Q_tot = solver_data->Q_tot;
+    int iP = solver_data->iP;
+    par_struct *par = solver_data->par;
+
+    // consumption and market purchases
+    double cons_w = share_cons_w * C_tot;
+    double cons_m = share_cons_m * C_tot;
+    double market = C_tot - cons_w - cons_m;
+
+    // constraint on consumption out of Ctot
+    double penalty = 0.0;
+    if (market<0.0){
+        penalty = -market * 10000.0;
+        market = 0.0;
+    }
+    
+    // home production
+    double home_prod = utils::home_prod_Qtot(Q_tot,market,par);
+
+    return - utils::util_couple(cons_w,cons_m,home_prod,leisure_w,leisure_m,iP,iL,par) + penalty;
+
+}
+void precompute_couple(sol_struct* sol, par_struct* par){
+
+    #pragma omp parallel num_threads(par->threads)
+    {
+        // setup numerical solver
+        solver_pre_struct* solver_data = new solver_pre_struct;
+                
+        const int dim = 2;
+        double lb[dim],ub[dim],x[dim];
+        
+        auto opt = nlopt_create(NLOPT_LN_BOBYQA, dim); // NLOPT_LN_BOBYQA NLOPT_LD_MMA NLOPT_LD_LBFGS NLOPT_GN_ORIG_DIRECT
+        nlopt_set_ftol_abs(opt,1.e-8);
+        double minf=0.0;
+
+        #pragma omp for
+        for (int iP=0; iP < par->num_power; iP++){
+            for (int i_q=0; i_q < par->num_pre_Q; i_q++){
+                for (int i_c=0; i_c < par->num_pre_C; i_c++){
+                    int idx = index::index3(iP,i_q,i_c,par->num_power,par->num_pre_Q,par->num_pre_C);
+
+                    solver_data->C_tot = par->grid_pre_Ctot[i_c];
+                    solver_data->Q_tot = par->grid_pre_Qtot[i_q];
+                    solver_data->iP = iP;
+                    solver_data->par = par;
+                    nlopt_set_min_objective(opt, objfunc_pre, solver_data);
+                        
+                    // bounds on share of total spending on private consumption
+                    lb[0] = 0.000000001;
+                    ub[0] = 0.999999999;
+                    lb[1] = 0.000000001;
+                    ub[1] = 0.999999999;
+                    nlopt_set_lower_bounds(opt, lb);
+                    nlopt_set_upper_bounds(opt, ub);
+
+                    // optimize over shares
+                    x[0] = 0.3;
+                    x[1] = 0.3;
+                    nlopt_optimize(opt, x, &minf);
+
+                    // store results 
+                    sol->pre_cons_w[idx] = x[0] * solver_data->C_tot;
+                    sol->pre_cons_m[idx] = x[1] * solver_data->C_tot;
+                    sol->pre_market[idx] = solver_data->C_tot - sol->pre_cons_w[idx] - sol->pre_cons_m[idx];
+
+                }
+            }
+        }
+
+        nlopt_destroy(opt);
+    } // pragma
+}
 
 /////////////
 // 5. MAIN //
@@ -107,6 +202,7 @@ EXPORT void solve(sol_struct *sol, par_struct *par){
 
     // pre-compute intra-temporal optimal allocation
     precompute_single(sol,par);
+    precompute_couple(sol,par);
 
     // loop backwards
     for (int t = par->T-1; t >= 0; t--){
