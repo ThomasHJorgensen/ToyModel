@@ -13,10 +13,11 @@ namespace couple {
         double Hm;
         int iP;
         par_struct *par;
+        sol_struct *sol;
 
-        double* cons_w;
-        double* cons_m;
-        double* market;
+        double cons_w;
+        double cons_m;
+        double market;
 
     } solver_last_struct;
 
@@ -31,6 +32,7 @@ namespace couple {
         double Hm = solver_data->Hm;
         int iP = solver_data->iP;
         par_struct* par = solver_data->par;
+        sol_struct* sol = solver_data->sol;
 
         double leisure_w = x[0];
         double leisure_m = x[1];
@@ -39,9 +41,9 @@ namespace couple {
         double hours_w = par->max_time - leisure_w;
         double hours_m = par->max_time - leisure_m;
 
-        double Qtot = time_input(hours_w,hours_m,Hw,Hm,par);
+        double Qtot = utils::time_input(hours_w,hours_m,Hw,Hm,par);
         double Ctot = par->R*A;
-            
+        
         // interpolate pre-computed consumption allocation (TODO: speed up by interpolating simultaneously)
         int idx = index::index3(iP,0,0,par->num_power,par->num_pre_Q,par->num_pre_C);
         double cons_w = tools::interp_2d(par->grid_pre_Qtot,par->grid_pre_Ctot,par->num_pre_Q,par->num_pre_C,
@@ -52,34 +54,23 @@ namespace couple {
         
         double market = Ctot - cons_w - cons_m;
 
-        // store in solve r data for later use
-        solver_data->cons_w[0] = cons_w;
-        solver_data->cons_m[0] = cons_m;
-        solver_data->market[0] = market;
-
-        // penalty
-        // double penalty = 0.0;
-        // if (hours_w<0.0){
-        //     penalty += -hours_w * 1000.0;
-        //     hours_w = 0.0;
-        // }
-        // if (hours_m<0.0){
-        //     penalty += -hours_m * 1000.0;
-        //     hours_m = 0.0;
-        // }
+        // store in solver data for later use
+        solver_data->cons_w = cons_w;
+        solver_data->cons_m = cons_m;
+        solver_data->market = market;
 
         // value of choice
         double home_prod = utils::home_prod_Qtot(Qtot,market,par);
-        return penalty - utils::util_couple(cons_w,cons_m,home_prod,leisure_w,leisure_m,iP,iL,par);
+        return  - utils::util_couple(cons_w,cons_m,home_prod,leisure_w,leisure_m,iP,iL,par);
 
     }
 
 
     void solve_couple_last(sol_struct *sol,par_struct *par){
-        #pragma omp parallel num_threads(par->threads)
+        #pragma omp parallel num_threads(1) //num_threads(par->threads)
         {
             // setup numerical solver
-            solver_pre_struct* solver_data = new solver_pre_struct;
+            solver_last_struct* solver_data = new solver_last_struct;
                     
             const int dim = 2;
             double lb[dim],ub[dim],x[dim];
@@ -88,26 +79,32 @@ namespace couple {
             nlopt_set_ftol_abs(opt,1.e-8);
             double minf=0.0;
 
+            // fixed states
             int t = par->T-1;
+            int iL = 0;
+            int iK_w = 0;
+            int iK_m = 0;
 
             // solve for values of reminaing a couple
             #pragma omp for
             for (int iP=0; iP<par->num_power; iP++){
                 for (int iH_w=0; iH_w<par->num_H; iH_w++){
+                    double Hw = par->grid_H[iH_w];
                     for (int iH_m=0; iH_m<par->num_H; iH_m++){
+                        double Hm = par->grid_H[iH_m];
                         for (int iA=0; iA<par->num_A; iA++){
-                            int iL = 0;
-                            int iK_w = 0;
-                            int iK_m = 0;
-                            int idx = index::index8(t,iL,iP,iH_w,iH_m,iK_w,iK_m,iA,
-                                                    par->T,par->num_love,par->num_power,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A);
+                            double A = par->grid_A[iA];
+                            
+                            int idx = index::index8(t,iP,iL,iH_w,iH_m,iK_w,iK_m,iA,
+                                                    par->T,par->num_power,par->num_love,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A);
 
                             // solve for leisure_w and leisure_m 
-                            solver_data->A = par->grid_A[iA];
-                            solver_data->Hw = par->grid_H[iH_w];
-                            solver_data->Hm = par->grid_H[iH_m];
+                            solver_data->A = A;
+                            solver_data->Hw = Hw;
+                            solver_data->Hm = Hm;
                             solver_data->iP = iP;
                             solver_data->par = par;
+                            solver_data->sol = sol;
                             nlopt_set_min_objective(opt, objfunc_last, solver_data);
 
                             // bounds on leisure time
@@ -118,7 +115,7 @@ namespace couple {
                             nlopt_set_lower_bounds(opt, lb);
                             nlopt_set_upper_bounds(opt, ub);
 
-                            // optimize over shares
+                            // optimize over leisure time
                             x[0] = 0.5*ub[0];
                             x[1] = 0.5*ub[0];
                             nlopt_optimize(opt, x, &minf);
@@ -128,28 +125,50 @@ namespace couple {
                             sol->leisure_m_remain[idx] = x[1];
                             sol->hours_w_remain[idx] = par->max_time - sol->leisure_w_remain[idx];
                             sol->hours_m_remain[idx] = par->max_time - sol->leisure_m_remain[idx];
-                            sol->labor_w_remain[idx] = 0.0;
-                            sol->labor_m_remain[idx] = 0.0;
+                            sol->labor_w_remain[idx] = 0.0; // not working in the last period 
+                            sol->labor_m_remain[idx] = 0.0; // not working in the last period 
 
-                            sol->cons_w_remain[idx] = solver_data->cons_w[0];
-                            sol->cons_m_remain[idx] = solver_data->cons_m[0];
-                            sol->market_remain[idx] = solver_data->market[0];
-                            
+                            sol->cons_w_remain[idx] = solver_data->cons_w;
+                            sol->cons_m_remain[idx] = solver_data->cons_m;
+                            sol->market_remain[idx] = solver_data->market;
+
+                            // value functions
+                            double home_prod = utils::home_prod(sol->hours_w_remain[idx], sol->hours_m_remain[idx], Hw, Hm,sol->market_remain[idx],par);
+                            double love = par->grid_love[iL];
+                            sol->Vw_remain[idx] = utils::util(sol->cons_w_remain[idx],sol->leisure_w_remain[idx],home_prod, woman,par) + love;
+                            sol->Vm_remain[idx] = utils::util(sol->cons_m_remain[idx],sol->leisure_m_remain[idx],home_prod, man,par) + love;
+
+                            // copy solution into other states
+                            for (int iL_now=0; iL_now<par->num_love; iL_now++){
+                                double love_now = par->grid_love[iL_now];
+
+                                for (int iK_w_now=0; iK_w_now<par->num_K; iK_w_now++){
+                                    for (int iK_m_now=0; iK_m_now<par->num_K; iK_m_now++){
+                                        int idx_now = index::index8(t,iP,iL_now,iH_w,iH_m,iK_w_now,iK_m_now,iA,
+                                                                    par->T,par->num_power,par->num_love,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A);
+
+                                        sol->leisure_w_remain[idx_now] = sol->leisure_w_remain[idx];
+                                        sol->leisure_m_remain[idx_now] = sol->leisure_m_remain[idx];
+                                        sol->hours_w_remain[idx_now] = sol->hours_w_remain[idx];
+                                        sol->hours_m_remain[idx_now] = sol->hours_m_remain[idx];
+                                        sol->labor_w_remain[idx_now] = sol->labor_w_remain[idx];
+                                        sol->labor_m_remain[idx_now] = sol->labor_m_remain[idx];
+
+                                        sol->cons_w_remain[idx_now] = sol->cons_w_remain[idx];
+                                        sol->cons_m_remain[idx_now] = sol->cons_m_remain[idx];
+                                        sol->market_remain[idx_now] = sol->market_remain[idx];
+
+                                        sol->Vw_remain[idx_now] = sol->Vw_remain[idx] - love + love_now;
+                                        sol->Vm_remain[idx_now] = sol->Vm_remain[idx] - love + love_now;
+
+                                    } // human capital, man
+                                } // human capital, woman
+                            } // love
 
                         } // wealth
                     } // home capital, man
                 } // home capital, woman
             } // power
-
-
-            // copy solution into other states
-            for (int iL=0; iL<par->num_love; iL++){
-                for (int iK_w=0; iK_w<par->num_K; iK_w++){
-                    for (int iK_m=0; iK_m<par->num_K; iK_m++){
-
-                    }
-                } 
-            } // love
 
         } // pragma
     }

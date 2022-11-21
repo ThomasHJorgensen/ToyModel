@@ -80,7 +80,7 @@ namespace utils {
 
     double util_couple(double cons_w, double cons_m, double home_prod,double leisure_w, double leisure_m, int iP,int iL,par_struct* par){
         double power = par->grid_power[iP];
-        double love = par->grid_love[iP];
+        double love = par->grid_love[iL];
 
         double Uw = util(cons_w,leisure_w,home_prod,woman,par);
         double Um = util(cons_m,leisure_m,home_prod,man,par);

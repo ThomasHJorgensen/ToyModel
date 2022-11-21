@@ -76,10 +76,10 @@ class HouseholdModelClass(EconModelClass):
         par.max_H = 10.0        
         
         # bargaining power
-        par.num_power = 21
+        par.num_power = 11
 
         # love/match quality
-        par.num_love = 41
+        par.num_love = 1
         par.max_love = 1.0
 
         par.sigma_love = 0.1

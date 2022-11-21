@@ -208,7 +208,7 @@ EXPORT void solve(sol_struct *sol, par_struct *par){
     for (int t = par->T-1; t >= 0; t--){
 
         single::solve_single(t,sol,par);
-        // couple::solve_couple(t,sol,par);
+        couple::solve_couple(t,sol,par);
 
     }
 }
