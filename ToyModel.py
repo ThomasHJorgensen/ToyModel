@@ -109,18 +109,18 @@ class HouseholdModelClass(EconModelClass):
         
         # singles
         shape_single = (par.T,par.num_H,par.num_K,par.num_A)
-        sol.V_w_single = np.nan + np.ones(shape_single)
-        sol.V_m_single = np.nan + np.ones(shape_single)
+        sol.Vw_single = np.nan + np.ones(shape_single)
+        sol.Vm_single = np.nan + np.ones(shape_single)
         
-        sol.c_w_single = np.nan + np.ones(shape_single)
-        sol.l_w_single = np.nan + np.ones(shape_single)
-        sol.h_w_single = np.nan + np.ones(shape_single)
-        sol.m_w_single = np.nan + np.ones(shape_single)
+        sol.cons_w_single = np.nan + np.ones(shape_single)
+        sol.leisure_w_single = np.nan + np.ones(shape_single)
+        sol.hours_w_single = np.nan + np.ones(shape_single)
+        sol.market_w_single = np.nan + np.ones(shape_single)
         
-        sol.c_m_single = np.nan + np.ones(shape_single)
-        sol.l_m_single = np.nan + np.ones(shape_single)
-        sol.h_m_single = np.nan + np.ones(shape_single)
-        sol.m_m_single = np.nan + np.ones(shape_single)
+        sol.cons_m_single = np.nan + np.ones(shape_single)
+        sol.leisure_m_single = np.nan + np.ones(shape_single)
+        sol.hours_m_single = np.nan + np.ones(shape_single)
+        sol.market_m_single = np.nan + np.ones(shape_single)
 
         # pre-computation
         shape_pre_single = (par.num_H,par.num_pre_h,par.num_pre_C)
@@ -146,8 +146,8 @@ class HouseholdModelClass(EconModelClass):
         sol.labor_w_remain = np.nan + np.ones(shape_couple)
         sol.labor_m_remain = np.nan + np.ones(shape_couple)
 
-        # sol.power_idx = np.zeros(shape_couple,dtype=np.int_)
-        # sol.power = np.zeros(shape_couple)
+        sol.power_idx = np.zeros(shape_couple,dtype=np.int_)
+        sol.power = np.zeros(shape_couple)
 
         # pre-computation
         shape_pre_couple = (par.num_power,par.num_pre_Q,par.num_pre_C)

@@ -309,22 +309,22 @@ namespace single {
 
                             // store results
                             double hours = x[0];
-                            sol->h_w_single[idx] = hours;
+                            sol->hours_w_single[idx] = hours;
                             double c = cons_from_Ctot(solver_data->Ctot,hours,iH,woman,sol,par);
-                            sol->m_w_single[idx] = solver_data->Ctot - c;
-                            sol->c_w_single[idx] = c;
-                            sol->l_w_single[idx] = par->max_time - sol->h_w_single[idx];
+                            sol->market_w_single[idx] = solver_data->Ctot - c;
+                            sol->cons_w_single[idx] = c;
+                            sol->leisure_w_single[idx] = par->max_time - sol->hours_w_single[idx];
                             
-                            sol->V_w_single[idx] = -minf;
+                            sol->Vw_single[idx] = -minf;
 
                             // insert for all values of human capital
                             for (int iK_now=1; iK_now<par->num_K;iK_now++){
                                 int idx_now = index::index4(t,iH,iK_now,iA,par->T,par->num_H,par->num_K,par->num_A);
-                                sol->c_w_single[idx_now] = sol->c_w_single[idx];
-                                sol->l_w_single[idx_now] = sol->l_w_single[idx];
-                                sol->h_w_single[idx_now] = sol->h_w_single[idx];
-                                sol->m_w_single[idx_now] = sol->m_w_single[idx];
-                                sol->V_w_single[idx_now] = sol->V_w_single[idx];
+                                sol->cons_w_single[idx_now] = sol->cons_w_single[idx];
+                                sol->leisure_w_single[idx_now] = sol->leisure_w_single[idx];
+                                sol->hours_w_single[idx_now] = sol->hours_w_single[idx];
+                                sol->market_w_single[idx_now] = sol->market_w_single[idx];
+                                sol->Vw_single[idx_now] = sol->Vw_single[idx];
                             }
 
 
@@ -354,22 +354,22 @@ namespace single {
 
                             // store results
                             hours = x[0];
-                            sol->h_m_single[idx] = hours;
+                            sol->hours_m_single[idx] = hours;
                             c = cons_from_Ctot(solver_data->Ctot,hours,iH,man,sol,par);
-                            sol->m_m_single[idx] = solver_data->Ctot - c;
-                            sol->c_m_single[idx] = c;
-                            sol->l_m_single[idx] = par->max_time - sol->h_m_single[idx];
+                            sol->market_m_single[idx] = solver_data->Ctot - c;
+                            sol->cons_m_single[idx] = c;
+                            sol->leisure_m_single[idx] = par->max_time - sol->hours_m_single[idx];
                             
-                            sol->V_m_single[idx] = -minf;
+                            sol->Vm_single[idx] = -minf;
 
                             // insert for all values of human capital
                             for (int iK_now=1; iK_now<par->num_K;iK_now++){
                                 int idx_now = index::index4(t,iH,iK_now,iA,par->T,par->num_H,par->num_K,par->num_A);
-                                sol->c_m_single[idx_now] = sol->c_m_single[idx];
-                                sol->l_m_single[idx_now] = sol->l_m_single[idx];
-                                sol->h_m_single[idx_now] = sol->h_m_single[idx];
-                                sol->m_m_single[idx_now] = sol->m_m_single[idx];
-                                sol->V_m_single[idx_now] = sol->V_m_single[idx];
+                                sol->cons_m_single[idx_now] = sol->cons_m_single[idx];
+                                sol->leisure_m_single[idx_now] = sol->leisure_m_single[idx];
+                                sol->hours_m_single[idx_now] = sol->hours_m_single[idx];
+                                sol->market_m_single[idx_now] = sol->market_m_single[idx];
+                                sol->Vm_single[idx_now] = sol->Vm_single[idx];
                             }
 
                         }
@@ -410,45 +410,45 @@ namespace single {
                             leisure_init = par->max_time/3.0;
                             hours_init = par->max_time/3.0;
                             if (iA>0){
-                                cons_init = sol->c_w_single[idx_last];
-                                market_init = sol->m_w_single[idx_last];
-                                leisure_init = sol->l_w_single[idx_last];
-                                hours_init = sol->h_w_single[idx_last];
+                                cons_init = sol->cons_w_single[idx_last];
+                                market_init = sol->market_w_single[idx_last];
+                                leisure_init = sol->leisure_w_single[idx_last];
+                                hours_init = sol->hours_w_single[idx_last];
                             }
                             
                             // printf("iH:%d,iK:%d,iA:%d,Ctot_init:%2.3f\n",iH,iK,iA, cons_init + market_init);
 
                             // solve model for women
-                            double* cons = &sol->c_w_single[idx];
-                            double* market = &sol->m_w_single[idx];
-                            double* leisure = &sol->l_w_single[idx];
-                            double* hours = &sol->h_w_single[idx];
-                            double* V_next = &sol->V_w_single[idx_next];
+                            double* cons = &sol->cons_w_single[idx];
+                            double* market = &sol->market_w_single[idx];
+                            double* leisure = &sol->leisure_w_single[idx];
+                            double* hours = &sol->hours_w_single[idx];
+                            double* V_next = &sol->Vw_single[idx_next];
                             
                             double obj = solve_period_single(cons, market, leisure, hours, 
                                                         Aw, K, Hw,iH,woman,V_next,sol,par,
                                                         cons_init, market_init, leisure_init, hours_init);
                             
-                            sol->V_w_single[idx] = -obj;
+                            sol->Vw_single[idx] = -obj;
 
                             // solve model for men
                             if (iA>0){
-                                cons_init = sol->c_m_single[idx_last];
-                                market_init = sol->m_m_single[idx_last];
-                                leisure_init = sol->l_m_single[idx_last];
-                                hours_init = sol->h_m_single[idx_last];
+                                cons_init = sol->cons_m_single[idx_last];
+                                market_init = sol->market_m_single[idx_last];
+                                leisure_init = sol->leisure_m_single[idx_last];
+                                hours_init = sol->hours_m_single[idx_last];
                             }
 
-                            cons = &sol->c_m_single[idx];
-                            market = &sol->m_m_single[idx];
-                            leisure = &sol->l_m_single[idx];
-                            hours = &sol->h_m_single[idx];
-                            V_next = &sol->V_m_single[idx_next];
+                            cons = &sol->cons_m_single[idx];
+                            market = &sol->market_m_single[idx];
+                            leisure = &sol->leisure_m_single[idx];
+                            hours = &sol->hours_m_single[idx];
+                            V_next = &sol->Vm_single[idx_next];
                             obj = solve_period_single(cons, market, leisure, hours,
                                                         Am, K, Hm,iH,man,V_next,sol,par,
                                                         cons_init, market_init, leisure_init, hours_init  );
                             
-                            sol->V_m_single[idx] = -obj;
+                            sol->Vm_single[idx] = -obj;
 
                         }
                     }

@@ -366,6 +366,154 @@ double interp_4d(double* grid1,double* grid2,double* grid3,double* grid4,int num
         return _interp_4d(grid1,grid2,grid3,grid4,num1,num2,num3,num4,value,xi1,xi2,xi3,xi4);
     }
 }
+    
+    void check_participation_constraints(int *power_idx,double* power,double* Sw,double* Sm,int idx_single_w,int idx_single_m,index_couple_struct *idx_couple,double** list_couple_w,double** list_couple_m,double** list_raw_w,double** list_raw_m,double** list_single_w,double** list_single_m,int num,par_struct* par){
+        // TODO: make more simple and intuitive
+        // check the participation constraints. Array
+        double min_Sw =tools::minf(Sw,par->num_power);
+        double min_Sm =tools::minf(Sm,par->num_power);
+        double max_Sw =tools::maxf(Sw,par->num_power);
+        double max_Sm =tools::maxf(Sm,par->num_power);
 
+        if ((min_Sw >= 0.0) & (min_Sm >= 0.0)) { // all values are consistent with marriage
+            for (int iP=0; iP<par->num_power; iP++){
+
+                // overwrite output for couple
+                int idx = idx_couple->idx(iP);
+                for (int i=0; i< num; i++){
+                    list_couple_w[i][idx] = list_raw_w[i][iP];
+                    list_couple_m[i][idx] = list_raw_m[i][iP];
+                }
+                power_idx[idx] = iP;
+                power[idx] = par->grid_power[iP];
+            }
+
+        } else if ((max_Sw < 0.0) | (max_Sm < 0.0)){ // no value is consistent with marriage
+            for (int iP=0; iP<par->num_power; iP++){
+
+                // overwrite output for couple
+                int idx = idx_couple->idx(iP);
+                for (int i=0; i< num; i++){
+                    list_couple_w[i][idx] = list_single_w[i][idx_single_w];
+                    list_couple_m[i][idx] = list_single_m[i][idx_single_m];
+                }
+                power_idx[idx] = -1.0;
+                power[idx] = -1;
+            }
+
+        } else { 
+
+            // a. find lowest (highest) value with positive surplus for women (men)
+            int Low_w = 1;      // in case there is no crossing, this will be the correct value
+            int Low_m = par->num_power-1-1; // in case there is no crossing, this will be the correct value
+            for (int iP=0; iP<par->num_power-1; iP++){ 
+                if ((Sw[iP]<0) & (Sw[iP+1]>=0)){
+                    Low_w = iP+1;
+                }
+                    
+                if ((Sm[iP]>=0) & (Sm[iP+1]<0)){
+                    Low_m = iP;
+                }
+            }
+
+            // b. interpolate the surplus of each member at indifference points
+            // women indifference
+            int id = Low_w-1;
+            double denom = (par->grid_power[id+1] - par->grid_power[id]);
+            double ratio_w = (Sw[id+1] - Sw[id])/denom;
+            double ratio_m = (Sm[id+1] - Sm[id])/denom;
+            double power_at_zero_w = par->grid_power[id] - Sw[id]/ratio_w;
+            double Sm_at_zero_w = Sm[id] + ratio_m*( power_at_zero_w - par->grid_power[id] );
+
+            // men indifference
+            id = Low_m;
+            denom = (par->grid_power[id+1] - par->grid_power[id]);
+            ratio_w = (Sw[id+1] - Sw[id])/denom;
+            ratio_m = (Sm[id+1] - Sm[id])/denom;
+            double power_at_zero_m = par->grid_power[id] - Sm[id]/ratio_m;
+            double Sw_at_zero_m = Sw[id] + ratio_w*( power_at_zero_m - par->grid_power[id] );
+
+            // c. update the outcomes
+            for (int iP=0; iP<par->num_power; iP++){
+
+                // index to store solution for couple 
+                int idx = idx_couple->idx(iP);
+
+                // i. woman wants to leave
+                if (iP<Low_w){ 
+
+                    // interpolate men's surplus
+                    if (Sm_at_zero_w > 0){ // man happy to shift some bargaining power
+                        for (int i=0; i< num; i++){
+                            if (iP==0){
+                                list_couple_w[i][idx] = tools::interp_1d_index(par->grid_power,par->num_power,list_raw_w[i],power_at_zero_w,Low_w-1); 
+                                list_couple_m[i][idx] = tools::interp_1d_index(par->grid_power,par->num_power,list_raw_m[i],power_at_zero_w,Low_w-1); 
+                            } else {
+                                list_couple_w[i][idx] = list_couple_w[i][idx_couple->idx(0)]; // re-use that the interpolated values are identical
+                                list_couple_m[i][idx] = list_couple_m[i][idx_couple->idx(0)]; // re-use that the interpolated values are identical
+                            }
+                        }
+                        
+                        power_idx[idx] = Low_w;
+                        power[idx] = power_at_zero_w;
+
+                    } else { // divorce
+
+                        for (int i=0; i< num; i++){
+                            list_couple_w[i][idx] = list_single_w[i][idx_single_w];
+                            list_couple_m[i][idx] = list_single_m[i][idx_single_m];
+                        }
+                        power_idx[idx] = -1;
+                        power[idx] = -1.0;
+                    }
+                
+                } 
+
+                // ii. man wants to leave
+                else if (iP>Low_m){  
+
+                    if (Sw_at_zero_m > 0){ // woman happy to shift some bargaining power
+                        
+                        for (int i=0; i< num; i++){
+                            if (iP==(Low_m+1)){
+                                list_couple_w[i][idx] = tools::interp_1d_index(par->grid_power,par->num_power,list_raw_w[i],power_at_zero_m,Low_m); 
+                                list_couple_m[i][idx] = tools::interp_1d_index(par->grid_power,par->num_power,list_raw_m[i],power_at_zero_m,Low_m); 
+                            } else {
+                                list_couple_w[i][idx] = list_couple_w[i][idx_couple->idx(Low_m+1)]; // re-use that the interpolated values are identical
+                                list_couple_m[i][idx] = list_couple_m[i][idx_couple->idx(Low_m+1)]; // re-use that the interpolated values are identical
+                            }
+                        }
+                        power_idx[idx] = Low_m;
+                        power[idx] = power_at_zero_m;
+                        
+                    } else { // divorce
+
+                        for (int i=0; i< num; i++){
+                            list_couple_w[i][idx] = list_single_w[i][idx_single_w];
+                            list_couple_m[i][idx] = list_single_m[i][idx_single_m];
+                        }
+
+                        power_idx[idx] = -1;
+                        power[idx] = -1.0;
+                    }
+
+                } 
+                
+                // iii. no-one wants to leave
+                else { 
+
+                    for (int i=0; i< num; i++){
+                        list_couple_w[i][idx] = list_raw_w[i][iP];
+                        list_couple_m[i][idx] = list_raw_m[i][iP];
+                    }
+
+                    power_idx[idx] = iP;
+                    power[idx] = par->grid_power[iP];
+                }
+            } // iP
+
+        } // outer check
+        
+    }
 
 } // tools
