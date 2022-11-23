@@ -122,10 +122,10 @@ namespace single {
         
         // Add resources available for consumption to solver data
         double labor = utils::labor_implied(solver_data->leisure,solver_data->hours,solver_data->par);
-        double income = labor*utils::wage_func(solver_data->K,solver_data->par);
-        double resources = solver_data->par->R*solver_data->A + income;
+        // double income = labor*utils::wage_func(solver_data->K,solver_data->par);
+        // double resources = solver_data->par->R*solver_data->A + income;
 
-        solver_data->resources = resources;
+        solver_data->resources = utils::resources_single(labor,solver_data->H,solver_data->K,solver_data->A,solver_data->par); //resources;
         
         // setup numerical solver
         const int dim = 1;
@@ -139,7 +139,7 @@ namespace single {
             
         // bounds on share of total spending on consumption
         lb[0] = 1.0e-6;
-        ub[0] = resources;
+        ub[0] = solver_data->resources;
         nlopt_set_lower_bounds(opt, lb);
         nlopt_set_upper_bounds(opt, ub);
 
@@ -181,8 +181,6 @@ namespace single {
         if (labor<0.0){
             penalty = -labor * 10000.0;
         }
-
-        // printf("leisure:%2.2f, hours:%2.2f -> obj:%2.3f\n",leisure,hours,solve_Ctot(cons,market,leisure,hours,A,K,H,iH,gender,V_next,sol,par, cons_init,market_init));
 
         return penalty + solve_Ctot(solver_data);
 
@@ -416,8 +414,6 @@ namespace single {
                                 hours_init = sol->hours_w_single[idx_last];
                             }
                             
-                            // printf("iH:%d,iK:%d,iA:%d,Ctot_init:%2.3f\n",iH,iK,iA, cons_init + market_init);
-
                             // solve model for women
                             double* cons = &sol->cons_w_single[idx];
                             double* market = &sol->market_w_single[idx];

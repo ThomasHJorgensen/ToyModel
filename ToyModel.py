@@ -64,7 +64,7 @@ class HouseholdModelClass(EconModelClass):
         par.max_time = 1.0
         
         # wealth
-        par.num_A = 30
+        par.num_A = 20
         par.max_A = 15.0
 
         # human capital
@@ -83,7 +83,7 @@ class HouseholdModelClass(EconModelClass):
         par.max_love = 1.0
 
         par.sigma_love = 0.1
-        par.num_shock_love = 5
+        par.num_shock_love = 1
 
         # switches
         par.do_bargaining = False
@@ -203,7 +203,7 @@ class HouseholdModelClass(EconModelClass):
         else:
             par.grid_love = np.array([0.0])
 
-        if par.sigma_love<=1.0e-6:
+        if (par.sigma_love<=1.0e-6) | (par.num_love==1):
             par.num_shock_love = 1
             par.grid_shock_love,par.grid_weight_love = np.array([0.0]),np.array([1.0])
 

@@ -7,7 +7,7 @@
 namespace utils {
     double labor_implied(double leisure, double hours, par_struct* par){
         double labor = par->max_time - leisure - hours;
-        if (labor<0){
+        if (labor<0.0){
             labor = 0.0;
         }
         return labor;
@@ -21,6 +21,16 @@ namespace utils {
 
     double wage_func(double K, par_struct* par){
         return std::exp(par->wage_const + par->wage_K * K);
+    }
+    double resources_single(double labor, double H, double K, double A, par_struct* par){
+        double income = labor*wage_func(K,par);
+        return par->R*A + income;
+    }
+
+    double resources_couple(double labor_w, double labor_m, double Hw, double Hm, double Kw, double Km, double A, par_struct* par){
+        double income_w = labor_w*wage_func(Kw,par);
+        double income_m = labor_m*wage_func(Km,par);
+        return par->R*A + income_w + income_m;
     }
 
     double home_prod_load(double H,int gender,par_struct *par){
