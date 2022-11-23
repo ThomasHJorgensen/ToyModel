@@ -28,6 +28,7 @@ typedef struct par_struct
  double max_love;
  double sigma_love;
  int num_shock_love;
+ bool do_bargaining;
  int seed;
  int simT;
  int simN;
@@ -98,6 +99,14 @@ int get_int_par_struct(par_struct* x, char* name){
  else if( strcmp(name,"num_pre_C") == 0 ){ return x->num_pre_C; }
  else if( strcmp(name,"num_pre_Q") == 0 ){ return x->num_pre_Q; }
  else {return -9999;}
+
+}
+
+
+bool get_bool_par_struct(par_struct* x, char* name){
+
+ if( strcmp(name,"do_bargaining") == 0 ){ return x->do_bargaining; }
+ else {return false;}
 
 }
 

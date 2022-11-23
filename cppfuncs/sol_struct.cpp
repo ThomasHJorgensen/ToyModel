@@ -25,6 +25,17 @@ typedef struct sol_struct
  double* hours_m_remain;
  double* labor_w_remain;
  double* labor_m_remain;
+ double* Vw_couple;
+ double* Vm_couple;
+ double* cons_w_couple;
+ double* cons_m_couple;
+ double* market_couple;
+ double* leisure_w_couple;
+ double* leisure_m_couple;
+ double* hours_w_couple;
+ double* hours_m_couple;
+ double* labor_w_couple;
+ double* labor_m_couple;
  int* power_idx;
  double* power;
  double* pre_cons_w;
@@ -59,6 +70,17 @@ double* get_double_p_sol_struct(sol_struct* x, char* name){
  else if( strcmp(name,"hours_m_remain") == 0 ){ return x->hours_m_remain; }
  else if( strcmp(name,"labor_w_remain") == 0 ){ return x->labor_w_remain; }
  else if( strcmp(name,"labor_m_remain") == 0 ){ return x->labor_m_remain; }
+ else if( strcmp(name,"Vw_couple") == 0 ){ return x->Vw_couple; }
+ else if( strcmp(name,"Vm_couple") == 0 ){ return x->Vm_couple; }
+ else if( strcmp(name,"cons_w_couple") == 0 ){ return x->cons_w_couple; }
+ else if( strcmp(name,"cons_m_couple") == 0 ){ return x->cons_m_couple; }
+ else if( strcmp(name,"market_couple") == 0 ){ return x->market_couple; }
+ else if( strcmp(name,"leisure_w_couple") == 0 ){ return x->leisure_w_couple; }
+ else if( strcmp(name,"leisure_m_couple") == 0 ){ return x->leisure_m_couple; }
+ else if( strcmp(name,"hours_w_couple") == 0 ){ return x->hours_w_couple; }
+ else if( strcmp(name,"hours_m_couple") == 0 ){ return x->hours_m_couple; }
+ else if( strcmp(name,"labor_w_couple") == 0 ){ return x->labor_w_couple; }
+ else if( strcmp(name,"labor_m_couple") == 0 ){ return x->labor_m_couple; }
  else if( strcmp(name,"power") == 0 ){ return x->power; }
  else if( strcmp(name,"pre_cons_w") == 0 ){ return x->pre_cons_w; }
  else if( strcmp(name,"pre_cons_m") == 0 ){ return x->pre_cons_m; }

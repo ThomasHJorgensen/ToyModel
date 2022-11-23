@@ -367,8 +367,8 @@ double interp_4d(double* grid1,double* grid2,double* grid3,double* grid4,int num
     }
 }
     
-    void check_participation_constraints(int *power_idx,double* power,double* Sw,double* Sm,int idx_single_w,int idx_single_m,index_couple_struct *idx_couple,double** list_couple_w,double** list_couple_m,double** list_raw_w,double** list_raw_m,double** list_single_w,double** list_single_m,int num,par_struct* par){
-        // TODO: make more simple and intuitive
+    void update_bargaining(int *power_idx,double* power,double* Sw,double* Sm,index::index_couple_struct *idx_couple,double** list_couple_w,double** list_couple_m,double** list_raw_w,double** list_raw_m,double* list_single_w,double* list_single_m,int num,par_struct* par){
+        
         // check the participation constraints. Array
         double min_Sw =tools::minf(Sw,par->num_power);
         double min_Sm =tools::minf(Sm,par->num_power);
@@ -394,8 +394,8 @@ double interp_4d(double* grid1,double* grid2,double* grid3,double* grid4,int num
                 // overwrite output for couple
                 int idx = idx_couple->idx(iP);
                 for (int i=0; i< num; i++){
-                    list_couple_w[i][idx] = list_single_w[i][idx_single_w];
-                    list_couple_m[i][idx] = list_single_m[i][idx_single_m];
+                    list_couple_w[i][idx] = list_single_w[i];
+                    list_couple_m[i][idx] = list_single_m[i];
                 }
                 power_idx[idx] = -1.0;
                 power[idx] = -1;
@@ -460,8 +460,8 @@ double interp_4d(double* grid1,double* grid2,double* grid3,double* grid4,int num
                     } else { // divorce
 
                         for (int i=0; i< num; i++){
-                            list_couple_w[i][idx] = list_single_w[i][idx_single_w];
-                            list_couple_m[i][idx] = list_single_m[i][idx_single_m];
+                            list_couple_w[i][idx] = list_single_w[i];
+                            list_couple_m[i][idx] = list_single_m[i];
                         }
                         power_idx[idx] = -1;
                         power[idx] = -1.0;
@@ -489,8 +489,8 @@ double interp_4d(double* grid1,double* grid2,double* grid3,double* grid4,int num
                     } else { // divorce
 
                         for (int i=0; i< num; i++){
-                            list_couple_w[i][idx] = list_single_w[i][idx_single_w];
-                            list_couple_m[i][idx] = list_single_m[i][idx_single_m];
+                            list_couple_w[i][idx] = list_single_w[i];
+                            list_couple_m[i][idx] = list_single_m[i];
                         }
 
                         power_idx[idx] = -1;

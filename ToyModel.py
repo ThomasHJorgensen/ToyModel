@@ -85,6 +85,9 @@ class HouseholdModelClass(EconModelClass):
         par.sigma_love = 0.1
         par.num_shock_love = 5
 
+        # switches
+        par.do_bargaining = False
+
         # simulation
         par.seed = 9210
         par.simT = par.T
@@ -122,7 +125,7 @@ class HouseholdModelClass(EconModelClass):
         sol.hours_m_single = np.nan + np.ones(shape_single)
         sol.market_m_single = np.nan + np.ones(shape_single)
 
-        # pre-computation
+        # pre-computation, singles
         shape_pre_single = (par.num_H,par.num_pre_h,par.num_pre_C)
         sol.pre_cons_w_single = np.nan + np.ones(shape_pre_single)
         sol.pre_market_w_single = np.nan + np.ones(shape_pre_single)
@@ -146,10 +149,24 @@ class HouseholdModelClass(EconModelClass):
         sol.labor_w_remain = np.nan + np.ones(shape_couple)
         sol.labor_m_remain = np.nan + np.ones(shape_couple)
 
+        sol.Vw_couple = np.nan + np.ones(shape_couple)
+        sol.Vm_couple = np.nan + np.ones(shape_couple)
+        
+        sol.cons_w_couple = np.nan + np.ones(shape_couple)
+        sol.cons_m_couple = np.nan + np.ones(shape_couple)
+        sol.market_couple = np.nan + np.ones(shape_couple)
+
+        sol.leisure_w_couple = np.nan + np.ones(shape_couple)
+        sol.leisure_m_couple = np.nan + np.ones(shape_couple)
+        sol.hours_w_couple = np.nan + np.ones(shape_couple)
+        sol.hours_m_couple = np.nan + np.ones(shape_couple)
+        sol.labor_w_couple = np.nan + np.ones(shape_couple)
+        sol.labor_m_couple = np.nan + np.ones(shape_couple)
+
         sol.power_idx = np.zeros(shape_couple,dtype=np.int_)
         sol.power = np.zeros(shape_couple)
 
-        # pre-computation
+        # pre-computation, couples
         shape_pre_couple = (par.num_power,par.num_pre_Q,par.num_pre_C)
         sol.pre_cons_w = np.nan + np.ones(shape_pre_couple)
         sol.pre_cons_m = np.nan + np.ones(shape_pre_couple)

@@ -178,11 +178,11 @@ namespace couple {
     }
 
     
-    void update_bargaining(int t,sol_struct* sol, par_struct* par){
-        // loop throuyg all states except power
+    void check_participation_constraints(int t,sol_struct* sol, par_struct* par){
+        // loop through all states except power
         #pragma omp parallel num_threads(par->threads)
         {
-// TODO: GENDER-SPECIFIC VALUES/lists
+
             // allocate memory to store relevant objects for the participation constraint check
             int shape_tmp = par->num_power;
             double* tmp_Vw = new double[shape_tmp];
@@ -198,10 +198,10 @@ namespace couple {
             int num_list = 5;
             double** list_couple_w = new double*[num_list]; 
             double** list_couple_m = new double*[num_list]; 
-            double** list_single_w = new double*[num_list]; 
-            double** list_single_m = new double*[num_list]; 
             double** list_raw_w = new double*[num_list]; 
             double** list_raw_m = new double*[num_list]; 
+            double* list_single_w = new double[num_list]; 
+            double* list_single_m = new double[num_list]; 
 
             double* Sw = new double[par->num_power];
             double* Sm = new double[par->num_power];
@@ -276,27 +276,54 @@ namespace couple {
                                     list_raw_m[i] = tmp_leisure_m; i++;
                                     list_raw_m[i] = tmp_hours_m; i++;
 
+                                    // TODO: reduction in value from transitioning? prefereably directly in the grids. 
                                     i = 0;
-                                    list_single_w[i] = sol->Vw_single; i++;
-                                    list_single_w[i] = sol->cons_w_single; i++;
-                                    list_single_w[i] = sol->market_w_single; i++;
-                                    list_single_w[i] = sol->leisure_w_single; i++;
-                                    list_single_w[i] = sol->hours_w_single; i++;
+                                    list_single_w[i] = sol->Vw_single[idx_single_w]; i++;
+                                    list_single_w[i] = sol->cons_w_single[idx_single_w]; i++;
+                                    list_single_w[i] = sol->market_w_single[idx_single_w]; i++;
+                                    list_single_w[i] = sol->leisure_w_single[idx_single_w]; i++;
+                                    list_single_w[i] = sol->hours_w_single[idx_single_w]; i++;
                                     i = 0;
-                                    list_single_m[i] = sol->Vm_single; i++;
-                                    list_single_m[i] = sol->cons_m_single; i++;
-                                    list_single_m[i] = sol->market_m_single; i++;
-                                    list_single_m[i] = sol->leisure_m_single; i++;
-                                    list_single_m[i] = sol->hours_m_single; i++;
+                                    list_single_m[i] = sol->Vm_single[idx_single_m]; i++;
+                                    list_single_m[i] = sol->cons_m_single[idx_single_m]; i++;
+                                    list_single_m[i] = sol->market_m_single[idx_single_m]; i++;
+                                    list_single_m[i] = sol->leisure_m_single[idx_single_m]; i++;
+                                    list_single_m[i] = sol->hours_m_single[idx_single_m]; i++;
 
                                     // update solution
-                                    tools::check_participation_constraints(sol->power_idx,sol->power,Sw,Sm,
-                                                                            idx_single_w,idx_single_m,idx_couple,
+                                    if (par->do_bargaining){
+                                        tools::update_bargaining(sol->power_idx,sol->power,Sw,Sm,
+                                                                            idx_couple,
                                                                             list_couple_w,list_couple_m,
                                                                             list_raw_w,list_raw_m,
                                                                             list_single_w,list_single_m,
                                                                             num_list, par);
-                            
+                                    } else {
+                                        for (int iP=0; iP<par->num_power; iP++){
+                                            int idx_c = idx_couple->idx(iP);
+
+                                            if (Sw[iP]>0.0 & Sm[iP] > 0.0){
+                                                for (int i=0; i< num_list; i++){
+                                                    list_couple_w[i][idx_c] = list_raw_w[i][iP];
+                                                    list_couple_m[i][idx_c] = list_raw_m[i][iP];
+                                                }
+
+                                                sol->power_idx[idx_c] = par->grid_power[iP];
+                                                sol->power[idx_c] = iP;   
+
+                                            } else { // divorce
+                                                for (int i=0; i< num_list; i++){
+                                                    list_couple_w[i][idx_c] = list_single_w[i];
+                                                    list_couple_m[i][idx_c] = list_single_m[i];
+                                                }
+
+                                                sol->power_idx[idx_c] = -1.0;
+                                                sol->power[idx_c] = -1;
+
+                                            }
+
+                                        }
+                                    }
 
                                 } // wealth
                             } // human capital, man
@@ -306,9 +333,12 @@ namespace couple {
             } // love
 
             // delete pointers
-            delete[] list_couple;
-            delete[] list_single;
-            delete[] list_raw;
+            delete[] list_couple_w;
+            delete[] list_couple_m;
+            delete[] list_raw_w;
+            delete[] list_raw_m;
+            delete list_single_w;
+            delete list_single_m;
 
             delete Sw;
             delete Sm;
@@ -336,7 +366,7 @@ namespace couple {
         }
 
         // check participation constraints
-        // update_bargaining(sol,par);
+        check_participation_constraints(t,sol,par);
 
     }
 
