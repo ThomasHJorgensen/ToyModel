@@ -170,6 +170,8 @@ namespace couple {
                 } // home capital, woman
             } // power
 
+            nlopt_destroy(opt);
+
         } // pragma
     }
 
@@ -437,7 +439,7 @@ namespace couple {
 
         // continuation value [be be sped up by re-using everything across genders]
         // next period states (power is fixed/end-of-period and potentially updated in subsequent barganing)
-        int idx_next = index::index8(t,iP,0,0,0,0,0,0,
+        int idx_next = index::index8(t+1,iP,0,0,0,0,0,0,
                                     par->T,par->num_power,par->num_love,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A);
 
         double Hw_next = utils::trans_H(Hw, hours_w, par);
@@ -525,6 +527,7 @@ namespace couple {
 
         Ctot[0] = 0.5*ub[0];
         nlopt_optimize(opt, Ctot, &minf);
+        nlopt_destroy(opt);
 
         // penalty on the inequality constraints
         labor_w = par->max_time - leisure_w - hours_w;
@@ -631,6 +634,7 @@ namespace couple {
                 } // love
             } // power
 
+            nlopt_destroy(opt);
 
         } // pragma
 
