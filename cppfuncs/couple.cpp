@@ -574,6 +574,9 @@ namespace couple {
                                     for (int iA=0; iA<par->num_A; iA++){
                                         double A = par->grid_A[iA];
 
+                                        // TEMP
+                                        if(iL ==0 & iH_w ==5 & iH_m ==5 & iK_w==5 & iK_m ==5){
+
                                         int idx = index::index8(t,iP,iL,iH_w,iH_m,iK_w,iK_m,iA,
                                                     par->T,par->num_power,par->num_love,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A);
 
@@ -591,7 +594,7 @@ namespace couple {
                                         solver_data->sol = sol;
                                         nlopt_set_min_objective(opt, objfunc, solver_data);
 
-                                        // bounds and cosntraints
+                                        // bounds and constraints
                                         for (int i=0; i<dim; i++){
                                             lb[i] = 0.000000001;
                                             ub[i] = par->max_time;
@@ -604,7 +607,9 @@ namespace couple {
                                         printf("%d,%d,%d,%d,%d,%d,%d\n",iP,iL,iH_w,iH_m,iK_w,iK_m,iA);
                                         // optimize over leisure and home production time
                                         for (int i=0; i<dim; i++){
-                                            x[i] = 0.3*ub[i];
+                                            // if(iA==0){
+                                                x[i] = 0.3*ub[i];
+                                            // } 
                                         }
                                         nlopt_optimize(opt, x, &minf);
 
@@ -625,6 +630,7 @@ namespace couple {
 
                                         sol->Vw_remain[idx] = solver_data->Vw;
                                         sol->Vm_remain[idx] = solver_data->Vm;
+                                        } // TEMP
 
                                     } // wealth
                                 } // human capital, man
