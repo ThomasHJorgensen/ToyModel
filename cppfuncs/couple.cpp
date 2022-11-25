@@ -22,13 +22,18 @@ namespace couple {
     } solver_last_struct;
 
     void cons_from_C_and_Q(double Ctot, double Qtot, int iP,sol_struct* sol, par_struct* par, double* cons_w, double* cons_m, double* market){
-        // interpolate pre-computed consumption allocation (TODO: speed up by interpolating simultaneously)
+        // interpolate pre-computed consumption allocation
         int idx = index::index3(iP,0,0,par->num_power,par->num_pre_Q,par->num_pre_C);
-        cons_w[0] = tools::interp_2d(par->grid_pre_Qtot,par->grid_pre_Ctot,par->num_pre_Q,par->num_pre_C,
-                                        &sol->pre_cons_w[idx],Qtot,Ctot);
+
+        tools::interp_2d_2out(par->grid_pre_Qtot,par->grid_pre_Ctot,par->num_pre_Q,par->num_pre_C,
+                                        &sol->pre_cons_w[idx],&sol->pre_cons_m[idx],Qtot,Ctot,
+                                        cons_w,cons_m);
+
+        // cons_w[0] = tools::interp_2d(par->grid_pre_Qtot,par->grid_pre_Ctot,par->num_pre_Q,par->num_pre_C,
+        //                                 &sol->pre_cons_w[idx],Qtot,Ctot);
         
-        cons_m[0] = tools::interp_2d(par->grid_pre_Qtot,par->grid_pre_Ctot,par->num_pre_Q,par->num_pre_C,
-                                        &sol->pre_cons_m[idx],Qtot,Ctot);
+        // cons_m[0] = tools::interp_2d(par->grid_pre_Qtot,par->grid_pre_Ctot,par->num_pre_Q,par->num_pre_C,
+        //                                 &sol->pre_cons_m[idx],Qtot,Ctot);
         
         market[0] = Ctot - cons_w[0] - cons_m[0];
     }
@@ -454,17 +459,28 @@ namespace couple {
             double love_next = love + par->grid_shock_love[i_love];
             double weight = par->grid_weight_love[i_love];
 
-            EVw_plus += weight * tools::interp_6d(
+            // interpolate both
+            double EVw_interp,EVm_interp;
+            tools::interp_6d_2out(
                             par->grid_love,par->grid_H,par->grid_H,par->grid_K,par->grid_K,par->grid_A,
                             par->num_love,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A,
-                            &sol->Vw_couple[idx_next], 
-                            love_next,Hw_next,Hm_next,Kw_next,Km_next,A_next);
+                            &sol->Vw_couple[idx_next],&sol->Vm_couple[idx_next], 
+                            love_next,Hw_next,Hm_next,Kw_next,Km_next,A_next,
+                            &EVw_interp,&EVm_interp);
+            
+            EVw_plus += weight * EVw_interp;
+            EVm_plus += weight * EVm_interp;
+            // EVw_plus += weight * tools::interp_6d(
+            //                 par->grid_love,par->grid_H,par->grid_H,par->grid_K,par->grid_K,par->grid_A,
+            //                 par->num_love,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A,
+            //                 &sol->Vw_couple[idx_next], 
+            //                 love_next,Hw_next,Hm_next,Kw_next,Km_next,A_next);
 
-            EVm_plus += weight * tools::interp_6d(
-                            par->grid_love,par->grid_H,par->grid_H,par->grid_K,par->grid_K,par->grid_A,
-                            par->num_love,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A,
-                            &sol->Vm_couple[idx_next], 
-                            love_next,Hw_next,Hm_next,Kw_next,Km_next,A_next);
+            // EVm_plus += weight * tools::interp_6d(
+            //                 par->grid_love,par->grid_H,par->grid_H,par->grid_K,par->grid_K,par->grid_A,
+            //                 par->num_love,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A,
+            //                 &sol->Vm_couple[idx_next], 
+            //                 love_next,Hw_next,Hm_next,Kw_next,Km_next,A_next);
         }
 
         // individual values
@@ -514,7 +530,7 @@ namespace couple {
         const int dim = 1;
         double lb[dim],ub[dim],Ctot[dim];
         auto opt = nlopt_create(NLOPT_LN_BOBYQA, dim); // NLOPT_LN_BOBYQA NLOPT_LD_MMA NLOPT_LD_LBFGS NLOPT_GN_ORIG_DIRECT
-        nlopt_set_ftol_abs(opt,1.e-8);
+        nlopt_set_ftol_abs(opt,1.e-7);
         double minf=0.0;
 
         nlopt_set_min_objective(opt, objfunc_Ctot, solver_data);
@@ -534,12 +550,12 @@ namespace couple {
         labor_m = par->max_time - leisure_m - hours_m;
         double penalty = 0.0;
         if (labor_w<0.0){
-            penalty += labor_w*1000.0;
+            penalty += -labor_w*1000.0;
         }
         if (labor_m<0.0){
-            penalty += labor_m*1000.0;
+            penalty += -labor_m*1000.0;
         }
-
+        // printf("lw=%2.2f,lm=%2.2f,C=%2.2f -> %2.3f,%2.3f\n",labor_w,labor_m,Ctot[0],minf , penalty);
         return minf + penalty;
 
     }
@@ -555,7 +571,7 @@ namespace couple {
             double lb[dim],ub[dim],x[dim];
             
             auto opt = nlopt_create(NLOPT_LN_COBYLA, dim); // NLOPT_LN_BOBYQA NLOPT_LD_MMA NLOPT_LD_LBFGS NLOPT_GN_ORIG_DIRECT
-            nlopt_set_ftol_abs(opt,1.e-8);
+            nlopt_set_ftol_abs(opt,1.e-7);
             double minf=0.0;
 
             // solve for values of reminaing a couple
@@ -575,11 +591,15 @@ namespace couple {
                                         double A = par->grid_A[iA];
 
                                         // TEMP
-                                        if(iL ==0 & iH_w ==5 & iH_m ==5 & iK_w==5 & iK_m ==5){
+                                        // if(iL ==0 & iH_w ==5 & iH_m ==5 & iK_w==5 & iK_m ==5){
+                                        // if(iH_m ==5 & iK_w==5 & iK_m ==5){
+                                        // if(iP==0 & iH_w==7 & iH_m ==5 & iK_w==5 & iK_m ==5 & iA==19){
+                                        // if(iH_w==7 & iH_m ==5 & iK_w==5 & iK_m ==5){
+                                        // if(iP==10 & iH_w==1 & iH_m ==5 & iK_w==5 & iK_m ==5 & iA==19){
+                                            
 
                                         int idx = index::index8(t,iP,iL,iH_w,iH_m,iK_w,iK_m,iA,
                                                     par->T,par->num_power,par->num_love,par->num_H,par->num_H,par->num_K,par->num_K,par->num_A);
-
 
                                         // solve for (leisure_w, hours_w, leisure_m, hours_m)
                                         solver_data->A = A;
@@ -630,7 +650,7 @@ namespace couple {
 
                                         sol->Vw_remain[idx] = solver_data->Vw;
                                         sol->Vm_remain[idx] = solver_data->Vm;
-                                        } // TEMP
+                                        // } // TEMP
 
                                     } // wealth
                                 } // human capital, man

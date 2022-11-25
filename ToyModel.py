@@ -72,7 +72,7 @@ class HouseholdModelClass(EconModelClass):
         par.max_K = 10.0
 
         # home capital
-        par.num_H = 15
+        par.num_H = 8
         par.max_H = 10.0        
         
         # bargaining power
@@ -98,7 +98,7 @@ class HouseholdModelClass(EconModelClass):
 
         # pre-computation
         par.num_pre_h = 50
-        par.num_pre_C = 100
+        par.num_pre_C = 50
         par.num_pre_Q = 50
         par.max_pre_Q = 10.0
 
