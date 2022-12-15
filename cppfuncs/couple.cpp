@@ -5,6 +5,10 @@
 #include "myheader.cpp"
 #endif
 
+// TODO:
+//      - EGM
+//      - parallel loop over more states: too much work in each node, and too little potential for parallelization
+
 namespace couple {
     typedef struct {
         
